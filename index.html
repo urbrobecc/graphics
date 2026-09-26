@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Motion Reel</title>
+<style>
+  @font-face { font-family: "Space Grotesk"; font-weight: 300; src: url(fonts/SpaceGrotesk-300.woff) format("woff"); }
+  @font-face { font-family: "Space Grotesk"; font-weight: 500; src: url(fonts/SpaceGrotesk-500.woff) format("woff"); }
+  @font-face { font-family: "Space Grotesk"; font-weight: 700; src: url(fonts/SpaceGrotesk-700.woff) format("woff"); }
+  @font-face { font-family: "Instrument Serif"; font-style: normal; src: url(fonts/InstrumentSerif-Regular.woff) format("woff"); }
+  @font-face { font-family: "Instrument Serif"; font-style: italic; src: url(fonts/InstrumentSerif-Italic.woff) format("woff"); }
+  @font-face { font-family: "JetBrains Mono"; font-weight: 400; src: url(fonts/JetBrainsMono-400.woff) format("woff"); }
+  @font-face { font-family: "JetBrains Mono"; font-weight: 700; src: url(fonts/JetBrainsMono-700.woff) format("woff"); }
+  html, body { margin: 0; height: 100%; background: #050507; color: #ddd; font: 13px "JetBrains Mono", monospace; }
+  body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+  canvas { width: min(100vw, calc((100vh - 60px) * 16 / 9)); aspect-ratio: 16 / 9; display: block; background: #000; cursor: pointer; }
+  .bar { display: flex; gap: 12px; align-items: center; width: min(100vw - 32px, calc((100vh - 60px) * 16 / 9)); }
+  input[type=range] { flex: 1; accent-color: #FF4A1C; }
+  button { background: #FF4A1C; color: #0B0B10; border: 0; padding: 6px 14px; font: inherit; font-weight: 700; cursor: pointer; }
+  body.render .bar { display: none; }
+  body.render { display: block; }
+  body.render canvas { width: 1920px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <filter id="goo" color-interpolation-filters="sRGB">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="11" result="b"/>
+    <feColorMatrix in="b" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 26 -11"/>
+  </filter>
+</svg>
+<canvas id="c" width="1920" height="1080"></canvas>
+<div class="bar">
+  <button id="play">PLAY</button>
+  <input id="scrub" type="range" min="0" max="899" value="0">
+  <span id="tc">0.00s</span>
+</div>
+<audio id="music" src="dist/soundtrack.wav" preload="auto"></audio>
+<script src="src/reel.js"></script>
+<script>
+(async function () {
+  const params = new URLSearchParams(location.search);
+  const renderMode = params.has('render');
+  if (renderMode) document.body.classList.add('render');
+  await Promise.all([...document.fonts].map(f => f.load()));
+  await document.fonts.ready;
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  Reel.init();
+
+  // Offline renderer hook.
+  window.renderFrameAt = (frame, subs) => { Reel.renderFrame(ctx, frame, subs); };
+  window.READY = true;
+  if (renderMode) return;
+
+  const music = document.getElementById('music');
+  const scrub = document.getElementById('scrub');
+  const tc = document.getElementById('tc');
+  const btn = document.getElementById('play');
+  scrub.max = Reel.frames - 1;
+  let playing = false, start = 0, t = 0;
+
+  function draw(frame) { Reel.renderFrame(ctx, frame, 1); scrub.value = frame; tc.textContent = (frame / Reel.FPS).toFixed(2) + 's'; }
+  function loop(now) {
+    if (!playing) return;
+    t = music.readyState >= 2 && !music.paused ? music.currentTime : (now - start) / 1000;
+    if (t >= Reel.DUR) { t = 0; start = now; music.currentTime = 0; }
+    draw(Math.min(Reel.frames - 1, Math.floor(t * Reel.FPS)));
+    requestAnimationFrame(loop);
+  }
+  function toggle() {
+    playing = !playing; btn.textContent = playing ? 'PAUSE' : 'PLAY';
+    if (playing) {
+      start = performance.now() - t * 1000;
+      music.currentTime = t; music.play().catch(() => {});
+      requestAnimationFrame(loop);
+    } else music.pause();
+  }
+  btn.onclick = toggle; canvas.onclick = toggle;
+  addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); toggle(); } });
+  scrub.oninput = () => { t = scrub.value / Reel.FPS; music.currentTime = t; start = performance.now() - t * 1000; draw(+scrub.value); };
+  draw(0);
+})();
+</script>
+</body>
+</html>
