@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Search Feedback</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1b1f24; --mute:#667085; --line:#e4e7ec; --good:#12804a; --bad:#c0392b; --accent:#3b5bdb; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#111418; --card:#1a1e24; --ink:#e8eaed; --mute:#9aa4b2; --line:#2a313a; --good:#4cc38a; --bad:#ff7b6b; --accent:#7c93ff; } }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui,sans-serif }
+  main { max-width:820px; margin:0 auto; padding:24px 16px 80px }
+  h1 { font-size:22px; margin:0 0 4px }
+  .sub { color:var(--mute); margin:0 0 20px }
+  form { display:flex; gap:8px; flex-wrap:wrap }
+  input[type=text] { flex:1 1 280px; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); font:inherit }
+  button { font:inherit; cursor:pointer; border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:8px; padding:8px 14px }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff }
+  .bar { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin:20px 0 8px; color:var(--mute); font-size:14px }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin:10px 0 }
+  .card h3 { margin:0; font-size:16px } .card h3 a { color:var(--accent); text-decoration:none }
+  .url { color:var(--mute); font-size:13px; word-break:break-all }
+  .ex { margin:8px 0; font-size:14px; max-height:6.5em; overflow:auto }
+  .actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center }
+  .actions input { flex:1 1 180px; padding:7px 10px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); font:inherit; font-size:14px }
+  button.on-good { background:var(--good); border-color:var(--good); color:#fff }
+  button.on-bad { background:var(--bad); border-color:var(--bad); color:#fff }
+  .err { color:var(--bad); margin-top:12px } .banner { background:var(--card); border:1px dashed var(--line); padding:8px 12px; border-radius:8px; font-size:14px; color:var(--mute); margin-top:12px }
+  .rev { margin-left:auto; font-size:14px; color:var(--mute) } .rev input { padding:4px 8px; width:120px; border:1px solid var(--line); border-radius:6px; background:var(--card); color:var(--ink) }
+</style>
+</head>
+<body>
+<main>
+  <h1>Search Feedback</h1>
+  <p class="sub">Run a query, judge each result, and build a labeled dataset.</p>
+  <form id="f">
+    <input type="text" id="q" placeholder="Enter a search query" autofocus required>
+    <button class="primary">Search</button>
+    <label class="rev">Reviewer <input id="rev" placeholder="your name"></label>
+  </form>
+  <div id="msg"></div>
+  <div class="bar"><span id="stats"></span>
+    <span><a href="/api/evaluations?format=csv">Export CSV</a> · <a href="/api/evaluations?format=jsonl">Export JSONL</a></span></div>
+  <div id="out"></div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+let current = null; // {query, search_id, results}
+const labels = {};  // url -> label for the current search
+const store = { get(k){ try { return localStorage.getItem(k) || "" } catch { return "" } }, set(k,v){ try { localStorage.setItem(k,v) } catch {} } };
+$("rev").value = store.get("reviewer");
+$("rev").oninput = () => store.set("reviewer", $("rev").value);
+
+async function refreshStats() {
+  const s = await (await fetch("/api/evaluations")).json();
+  const pct = s.total ? Math.round(100 * s.relevant / s.total) : 0;
+  $("stats").textContent = `${s.total} saved evaluations, ${s.relevant} relevant, ${s.not_relevant} not relevant` + (s.total ? ` (${pct}% precision)` : "");
+}
+
+$("f").onsubmit = async (e) => {
+  e.preventDefault();
+  $("msg").innerHTML = ""; $("out").innerHTML = "Searching...";
+  try {
+    const r = await fetch("/api/search", { method: "POST", headers: {"content-type":"application/json"}, body: JSON.stringify({ query: $("q").value }) });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error);
+    current = data; for (const k in labels) delete labels[k];
+    if (data.mock) $("msg").innerHTML = '<div class="banner">Showing sample results. Set PARALLEL_API_KEY on the server to use the live Parallel Search API.</div>';
+    render();
+  } catch (err) { $("out").innerHTML = ""; $("msg").innerHTML = `<div class="err">${esc(err.message)}</div>`; }
+};
+
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const safeHref = (u) => /^https?:\/\//i.test(u) ? u : "#";
+
+function render() {
+  $("out").innerHTML = "";
+  if (!current.results?.length) { $("out").textContent = "No results."; return; }
+  current.results.forEach((res, i) => {
+    const el = document.createElement("div"); el.className = "card";
+    const ex = (res.excerpts || []).join(" ... ");
+    el.innerHTML = `<h3>${i+1}. <a target="_blank" rel="noopener" href="${esc(safeHref(res.url))}">${esc(res.title || res.url)}</a></h3>
+      <div class="url">${esc(res.url)}</div><div class="ex">${esc(ex)}</div>
+      <div class="actions"><button data-l="relevant">Relevant</button><button data-l="not_relevant">Not relevant</button>
+      <input placeholder="Optional note"></div>`;
+    const [good, bad] = el.querySelectorAll("button"), note = el.querySelector("input");
+    const paint = () => { good.className = labels[res.url] === "relevant" ? "on-good" : ""; bad.className = labels[res.url] === "not_relevant" ? "on-bad" : ""; };
+    const send = async (label) => {
+      // Clicking the active label again clears it.
+      if (labels[res.url] === label) label = "cleared";
+      await fetch("/api/feedback", { method: "POST", headers: {"content-type":"application/json"}, body: JSON.stringify({
+        query: current.query, search_id: current.search_id, url: res.url, title: res.title, rank: i + 1,
+        label, note: note.value, reviewer: $("rev").value || "anonymous" }) });
+      labels[res.url] = label === "cleared" ? null : label; paint(); refreshStats();
+    };
+    good.onclick = () => send("relevant"); bad.onclick = () => send("not_relevant");
+    note.onchange = () => { if (labels[res.url]) send(labels[res.url] === "relevant" ? "relevant" : "not_relevant").then(()=>{}); };
+    el.dataset.i = i; $("out").appendChild(el);
+  });
+}
+refreshStats();
+</script>
+</body>
+</html>
