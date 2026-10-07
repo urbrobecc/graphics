@@ -1,9 +1,9 @@
-// "peri" launch film. 32 s at 24 fps, 120 BPM (one bar = 2 s).
+// "scouter" launch film. 32 s at 24 fps, 120 BPM (one bar = 2 s).
 //
-//   0.0  intro        wordmark, the dot of the i grows into a lens
-//   1.6  lens         four tiny worlds seen through the periscope, the last is a night market
+//   0.0  intro        wordmark, the o is a mint ball that grows into a lens
+//   1.6  lens         three worlds seen through the periscope: crypto, a podcast, the stock market
 //   8.0  wide         Peri drops in, the lens floats off as an orb, then it pings
-//  10.6  push in      camera dollies in, cards appear in Peri's line of sight, it saves them
+//  10.6  push in      camera dollies in, cards appear in Peri's line of sight, it scouts them
 //  17.2  eyes         dolly into the face, a check badge, joy
 //  21.0  friends      pull back, five friends drop in with the tagline
 //  27.5  waitlist     phone + call to action, iris closes on the logo lockup
@@ -12,7 +12,7 @@
   const U = P.ui, S = P.scenes;
   const PX = 560, FLOOR = 820, S0 = 0.34;       // Peri's home in world space
   const R0 = 500;                               // lens radius at full size
-  const CUT = [1.6, 4.0, 5.5, 7.0, 8.0];        // montage cuts (all on beats)
+  const CUT = [1.6, 4.0, 6.0, 8.0];             // montage cuts (all on bar lines)
 
   // ---------- small helpers ----------
   const track = (t, keys) => {                  // smooth interpolation through [time, value] keys
@@ -104,11 +104,11 @@
 
   // ---------- friends ----------
   const FRIENDS = [
-    { v: 'rose', x: 30, y: FLOOR, s: 0.31, t: 22.55, ext: 110, text: 'me too!', col: '#ff6fae', flip: false, by: 0 },
-    { v: 'sky', x: 250, y: FLOOR + 6, s: 0.33, t: 23.05, ext: 190, text: 'count me in', col: '#2fa9e6', flip: false, by: 95 },
-    { v: 'peach', x: 820, y: FLOOR + 60, s: 0.35, t: 23.55, ext: 60, text: 'save me a seat', col: '#f4714a', flip: true, by: 0 },
-    { v: 'lemon', x: 1010, y: FLOOR + 6, s: 0.31, t: 24.05, ext: 150, text: "i'll bring snacks", col: '#e0a010', flip: true, by: 100 },
-    { v: 'lilac', x: 1190, y: FLOOR, s: 0.3, t: 24.55, ext: 230, text: 'finally!', col: '#7a58e8', flip: true, by: 0 },
+    { v: 'rose', x: 30, y: FLOOR, s: 0.31, t: 22.55, ext: 110, text: 'robinhood chain\njust launched', col: '#e8438f', flip: false, by: 0 },
+    { v: 'sky', x: 250, y: FLOOR + 6, s: 0.33, t: 23.05, ext: 190, text: '6 podcasts have\nmentioned MRVL today', col: '#1f93d6', flip: false, by: 130 },
+    { v: 'peach', x: 820, y: FLOOR + 60, s: 0.35, t: 23.55, ext: 60, text: 'X has a negative\nsentiment today', col: '#e45a34', flip: true, by: 0 },
+    { v: 'lemon', x: 1010, y: FLOOR + 6, s: 0.31, t: 24.05, ext: 150, text: 'ooh, noted', col: '#c98a00', flip: true, by: 130 },
+    { v: 'lilac', x: 1190, y: FLOOR, s: 0.3, t: 24.55, ext: 230, text: 'good scouting', col: '#6a47e0', flip: true, by: 0 },
   ];
   function friendPeri(f, i, t) {
     const d = drop(t, f.t, 760 + i * 40, 0.36);
@@ -136,26 +136,26 @@
     ctx.save(); ctx.scale(R / R0, R / R0);
     const nxt = idx + 1 < names.length ? idx + 1 : -1;
     const cutT = nxt >= 0 ? CUT[nxt] : 99, w = ease.io3(seg(t, cutT - 0.09, cutT + 0.09));
-    if (t >= CUT[CUT.length - 1] - 0.0 || nxt < 0) drawScene(3, 0);
+    if (t >= CUT[CUT.length - 1] || nxt < 0) drawScene(names.length - 1, 0);
     else if (w <= 0) drawScene(idx, 0);
     else { drawScene(idx, -w); drawScene(nxt, 1 - w); }
     ctx.restore();
   }
 
   function introContent(ctx, t) {
-    const size = 330, baseY = 650;
-    const dot = U.wordmark(ctx, W / 2, baseY, size, t, { delay: 0.3, alpha: 1 - seg(t, 1.45, 1.8) });
-    // the dot of the i falls in, lands, then grows into the lens
-    const fall = ease.in2(clamp((t - 0.15) / 0.65)), by = lerp(-80, dot.y, fall);
+    const size = 300, baseY = 640;
+    const slot = U.wordmark(ctx, W / 2, baseY, size, t, { delay: 0.3, alpha: 1 - seg(t, 1.45, 1.8) });
+    // the mint ball falls into the o, lands, then grows into the lens
+    const fall = ease.in2(clamp((t - 0.15) / 0.65)), by = lerp(-120, slot.y, fall);
     const sq = t < 0.8 ? -0.1 * fall : 0.22 * Math.exp(-(t - 0.8) * 9) * Math.cos((t - 0.8) * 20);
-    if (t < 1.75) { ctx.save(); ctx.globalAlpha = 1 - seg(t, 1.6, 1.75); U.ball(ctx, dot.x, by, 36, 1 + sq, 1 - sq); ctx.restore(); }
+    if (t < 1.75) { ctx.save(); ctx.globalAlpha = 1 - seg(t, 1.6, 1.75); U.ball(ctx, slot.x, by, slot.r, 1 + sq, 1 - sq); ctx.restore(); }
   }
 
   function lensStage(ctx, t, dotPos) {
     // lens grows out of the dot, then settles in the middle of the screen
     const g = ease.io3(seg(t, 1.5, 2.3));
-    const cx = lerp(dotPos[0], W / 2, g), cy = lerp(dotPos[1], H / 2, g), R = lerp(30, R0, ease.out3(seg(t, 1.5, 2.3)));
-    const pulse = CUT.slice(1, 4).reduce((a, c) => a + (t > c ? 0.07 * Math.exp(-(t - c) * 9) : 0), 0);
+    const cx = lerp(dotPos[0], W / 2, g), cy = lerp(dotPos[1], H / 2, g), R = lerp(dotPos[2], R0, ease.out3(seg(t, 1.5, 2.3)));
+    const pulse = CUT.slice(1, -1).reduce((a, c) => a + (t > c ? 0.07 * Math.exp(-(t - c) * 9) : 0), 0);
     S.lens(ctx, cx, cy, R * (1 + pulse), t, (c, r) => lensContent(c, t, r));
     return [cx, cy, R];
   }
@@ -169,9 +169,9 @@
 
   // ---------- cards (screen space) ----------
   const CARDS = [
-    { t: 12.45, x: 1030, y: 120, w: 700, h: 176, rot: -2, kind: 'tent', title: 'night market', sub: 'tonight · 7pm · pier 4', pill: { text: 'tonight', color: '#ff7eb6' } },
-    { t: 13.45, x: 1100, y: 336, w: 700, h: 176, rot: 1.5, kind: 'mango', title: 'mango stand', sub: 'fresh cut, row C', pill: { text: '40 left', color: '#ffb02e' } },
-    { t: 14.45, x: 1040, y: 552, w: 700, h: 176, rot: -1, kind: 'note', title: 'live jazz', sub: '8:30pm · main stage', pill: { text: 'free', color: '#34c47c' } },
+    { t: 12.45, x: 1030, y: 120, w: 700, h: 176, rot: -2, kind: 'candles', title: 'crypto', sub: 'new chains, live now', pill: { text: '3 new', color: '#ff7eb6' } },
+    { t: 13.45, x: 1100, y: 336, w: 700, h: 176, rot: 1.5, kind: 'mic', title: 'podcasts', sub: 'ticker mentions today', pill: { text: 'live', color: '#8c6cf0' } },
+    { t: 14.45, x: 1040, y: 552, w: 700, h: 176, rot: -1, kind: 'trend', title: 'stocks', sub: 'sentiment, every open', pill: { text: 'moving', color: '#25b870' } },
   ];
   const BTN = { t: 15.3, x: 1230, y: 792, w: 440, h: 112 };
   function cards(ctx, t) {
@@ -188,7 +188,7 @@
       if (t > saveT + i * 0.1) U.badge(ctx, k.x + k.w - 14, k.y + k.h - 10 + Math.sin(t * 1.8 + i * 2) * 6, 76, t - saveT - i * 0.1, { rot: 0.1 });
     });
     const press = t > 16.5 ? Math.exp(-(t - 16.5) * 14) : 0;
-    U.button(ctx, Object.assign({ age: t - BTN.t, label: 'save all 3', saved: ease.out3(seg(t, 16.55, 16.8)), press }, BTN, { y: BTN.y + Math.sin(t * 1.6) * 5 }));
+    U.button(ctx, Object.assign({ age: t - BTN.t, label: 'scout all 3', doneLabel: 'scouting', saved: ease.out3(seg(t, 16.55, 16.8)), press }, BTN, { y: BTN.y + Math.sin(t * 1.6) * 5 }));
     // cursor glides to the button, taps
     if (t > 15.9) {
       const k = ease.io3(seg(t, 15.9, 16.5)), cx = lerp(1850, BTN.x + BTN.w * 0.9, k), cy = lerp(1060, BTN.y + BTN.h * 0.62, k);
@@ -213,7 +213,7 @@
         ctx.save(); ctx.translate(orb.x - 960, orb.y - 540);                   // orb lives in world space, centred on the stage
         ctx.translate(960, 540);
         S.lens(ctx, 0, 0, orb.R, t, (cc, r) => lensContent(cc, t, r));
-        if (t > 8.9) S.reticle(ctx, 0, 0, orb.R * 0.9, t, 'night market');
+        if (t > 8.9) S.reticle(ctx, 0, 0, orb.R * 0.9, t, 'scouting');
         // ping rings
         for (let i = 0; i < 3; i++) {
           const a = t - 10.0 - i * 0.18; if (a < 0 || a > 1.0) continue;
@@ -224,8 +224,8 @@
         const ca = t - 10.0;
         if (ca > 0) {
           ctx.save(); ctx.translate(orb.x + orb.R * 0.55, orb.y - orb.R * 0.9); const p = spring(ca, 2.4, 0.4); ctx.scale(p, p);
-          ctx.fillStyle = '#ff5b8d'; P.rrect(ctx, -70, -26, 140, 52, 26); ctx.fill();
-          P.text(ctx, 'just in', 0, 9, { font: P.font(700, 28), color: '#fff', align: 'center' }); ctx.restore();
+          ctx.fillStyle = '#ff5b8d'; P.rrect(ctx, -104, -26, 208, 52, 26); ctx.fill();
+          P.text(ctx, 'new signal', 0, 9, { font: P.font(700, 28), color: '#fff', align: 'center' }); ctx.restore();
         }
       });
     }
@@ -270,17 +270,16 @@
         const land = t - f.t - 0.36;
         if (land < 0) continue;
         const hx = f.x + (f.flip ? -10 : 10), hy = f.y - 500 * f.s - f.by;
-        U.bubble(ctx, hx, hy, f.text, land - 0.15, { size: 34, tail: f.flip ? 0.2 : 0.8, color: f.col, rot: f.flip ? 2 : -2 });
-        U.tag(ctx, f.x + (f.flip ? 40 : -40), f.y - 300 * f.s, '+1', land, f.col);
+        U.bubble(ctx, hx, hy, f.text, land - 0.15, { size: 32, tail: f.flip ? 0.2 : 0.8, color: f.col, rot: f.flip ? 2 : -2 });
         U.burst(ctx, f.x, f.y - 60, land, { n: 12, speed: 380, seed: i * 7, size: 11, colors: [f.col, '#fff', '#ffe27a'] });
       }
     });
     // tagline
-    const words = [['good', 25.3], ['finds', 25.45], ['are', 25.6], ['better', 25.9]];
+    const words = [['better', 25.35], ['scouted', 25.65]];
     const out = ease.in2(seg(t, 27.1, 27.5));
     ctx.save(); ctx.translate(0, -out * 80); ctx.globalAlpha *= 1 - out;
     const font = P.font(700, 112);
-    const line1 = 'good finds are better', w1 = P.measure(ctx, line1, font, -2);
+    const line1 = 'better scouted', w1 = P.measure(ctx, line1, font, -2);
     let x = (W - (w1 + P.measure(ctx, ' together.', P.font(400, 124, 'Instrument Serif', 'italic')) + 20)) / 2;
     for (const [w, tt] of words) {
       const a = clamp((t - tt) / 0.5), p = ease.outBack(a, 1.8);
@@ -332,19 +331,20 @@
   function endCard(ctx, t) {
     const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#f6fafc'); g.addColorStop(1, '#e4eef4'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     const a = t - 30.7;
-    const dot = U.wordmark(ctx, 1190, 650, 300, a, { delay: 0.05, color: C.ink });
-    const pop = spring(a - 0.5, 2, 0.4);
-    U.ball(ctx, dot.x, dot.y, 33 * clamp(pop, 0, 1.1));
+    const slot = U.wordmark(ctx, 1210, 650, 250, a, { delay: 0.05, color: C.ink });
+    const pop = spring(a - 0.45, 2, 0.4);
+    U.ball(ctx, slot.x, slot.y, slot.r * clamp(pop, 0, 1.1));
     const d = drop(t, 30.75, 600, 0.3);
-    const o = Object.assign(P.idle(t, 9), { x: 620, y: 700 + d.dy, s: 0.5, ext: track(t, [[30.7, 190], [31.3, 190], [31.6, 40]]), mood: 'happy', cheeks: 1, lookX: 0.6, lookY: 0, sq: d.sq });
+    const o = Object.assign(P.idle(t, 9), { x: 390, y: 700 + d.dy, s: 0.5, ext: track(t, [[30.7, 190], [31.3, 190], [31.6, 40]]), mood: 'happy', cheeks: 1, lookX: 0.6, lookY: 0, sq: d.sq });
     P.drawPeriOnFloor(ctx, o, 700);
-    if (t > 31.45) { const p = t - 31.45; U.star(ctx, 1190 + 340, 360, 30 * Math.sin(clamp(p / 0.4) * Math.PI), p * 3, '#34d27a'); }
+    if (t > 31.45) { const p = t - 31.45; U.star(ctx, 1210 + 520, 430, 30 * Math.sin(clamp(p / 0.4) * Math.PI), p * 3, '#34d27a'); }
+    P.text(ctx, 'for illustration only. not financial advice.', W / 2, 1010, { font: P.font(500, 22, 'JetBrains Mono'), color: C.inkSoft, align: 'center', ls: 1, alpha: 0.7 * clamp((a - 0.9) / 0.5) });
   }
 
   // ---------- frame ----------
   let dotCache = null;
   function introDot() {
-    if (!dotCache) { const d = U.wordmark(document.createElement('canvas').getContext('2d'), W / 2, 650, 330, 99, { delay: 0 }); dotCache = [d.x, d.y]; }
+    if (!dotCache) { const d = U.wordmark(document.createElement('canvas').getContext('2d'), W / 2, 640, 300, 99, { delay: 0 }); dotCache = [d.x, d.y, d.r]; }
     return dotCache;
   }
   const montageLabel = t => { let i = 0; for (let k = 1; k < CUT.length - 1; k++) if (t >= CUT[k]) i = k; return S.labels[i]; };
@@ -357,7 +357,7 @@
         const [cx, cy, R] = lensStage(ctx, t, introDot());
         if (t > 2.3) S.reticle(ctx, cx, cy, R, t, montageLabel(t));
       }
-      for (const c of CUT.slice(1, 4)) if (t > c - 0.02 && t < c + 0.2) P.flash(ctx, 0.35 * (1 - (t - c) / 0.2));
+      for (const c of CUT.slice(1, -1)) if (t > c - 0.02 && t < c + 0.2) P.flash(ctx, 0.35 * (1 - (t - c) / 0.2));
     } else if (t < 18.4) wide(ctx, t);
     else if (t < 22.5) eyes(ctx, t);
     else if (t < 27.9) friends(ctx, t);

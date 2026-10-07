@@ -1,6 +1,6 @@
-"""Soundtrack for the Peri film, synthesized with numpy and scipy.
+"""Soundtrack for the Scouter film, synthesized with numpy and scipy.
 
-    python3 peri/audio/synth.py        ->  peri/dist/soundtrack.wav
+    python3 scouter/audio/synth.py        ->  scouter/dist/soundtrack.wav
 
 120 BPM, one bar is 2 s, 16 bars = 32 s. Every effect below is placed on a timestamp
 from the animation (film.js), so the picture and the sound hit together.
@@ -238,16 +238,16 @@ def pads(t0, t1, g=1.0):
 def build():
     # ---- 0 to 1.6 intro: the wordmark spells itself with a little motif
     pads(0.0, 2.0, 0.8)
-    for i, n in enumerate(['C5', 'E5', 'G5', 'A5']):
-        pop(0.46 + 0.09 * i, hz(m(n)) * 0.9, hz(m(n)) * 1.08, 0.9, pan=-0.3 + i * 0.2)
-        pluck(0.46 + 0.09 * i, m(n), g=0.5, pan=-0.3 + i * 0.2)
+    for i, n in zip([0, 1, 3, 4, 5, 6], ['C5', 'D5', 'E5', 'G5', 'A5', 'C6']):     # s c . u t e r, the o is the ball
+        pop(0.44 + 0.06 * i, hz(m(n)) * 0.9, hz(m(n)) * 1.08, 0.9, pan=-0.5 + i * 0.17)
+        pluck(0.44 + 0.06 * i, m(n), g=0.5, pan=-0.5 + i * 0.17)
     thud(0.8, 70, 0.8); boing(0.8, 360, 520, 0.5, 0.3)
     riser(1.05, 0.55, 0.7); whoosh(1.45, 0.9, True, 0.9)
     bell(1.6, m('G5'), g=0.8)
     # ---- 2 to 8 montage: the groove starts on the downbeat of bar 2
     pads(2.0, 8.0, 1.0)
     groove(2.0, 7.0, hats=True, g=0.95)
-    for c in (4.0, 5.5, 7.0):
+    for c in (4.0, 6.0):
         whoosh(c - 0.12, 0.3, True, 0.8, pan=0.3); click(c, 0.9)
     # snare-style roll into the drop
     for k in range(16):
@@ -316,7 +316,7 @@ def build():
         pop(t0 + 0.37, hz(m(notes[i])) * 0.9, hz(m(notes[i])) * 1.1, 1.0, pan=-0.6 + 0.3 * i)
         bell(t0 + 0.37, m(notes[i]) + 12, g=0.6, pan=-0.6 + 0.3 * i)
         pop(t0 + 0.52, 700 + 80 * i, 1200 + 90 * i, 0.6, 0.5 - 0.25 * i)
-    for t, n in [(25.3, 'E5'), (25.45, 'G5'), (25.6, 'A5'), (25.9, 'C6')]:
+    for t, n in [(25.35, 'E5'), (25.65, 'G5')]:
         pluck(t, m(n), g=1.1, bright=1.4, pan=0.2)
     for i, n in enumerate(['C5', 'E5', 'G5', 'C6']):
         bell(26.3 + i * 0.03, m(n), g=0.9, pan=-0.3 + 0.2 * i)
@@ -333,14 +333,14 @@ def build():
     click(29.0, 1.2, f=1900)
     for i, n in enumerate(['E6', 'G6', 'C7']):
         bell(29.03 + i * 0.05, m(n), g=0.6, pan=0.2 * i)
-    # ---- 30.4 iris closes, logo lockup, same four note motif as the start
+    # ---- 30.4 iris closes, logo lockup, same note motif as the start
     whoosh(30.35, 0.7, False, 1.0)
     riser(30.1, 0.5, 0.6, 300, 1800)
     thud(31.05, 70, 0.8)
     pad(30.4, [m('C4'), m('E4'), m('G4'), m('B4'), m('C5')], 2.6, 1.5)
-    for i, n in enumerate(['C5', 'E5', 'G5', 'A5']):
-        pop(30.78 + 0.09 * i, hz(m(n)) * 0.9, hz(m(n)) * 1.08, 0.9, pan=-0.3 + i * 0.2)
-        pluck(30.78 + 0.09 * i, m(n), g=0.55, pan=-0.3 + i * 0.2)
+    for i, n in zip([0, 1, 3, 4, 5, 6], ['C5', 'D5', 'E5', 'G5', 'A5', 'C6']):
+        pop(30.84 + 0.06 * i, hz(m(n)) * 0.9, hz(m(n)) * 1.08, 0.9, pan=-0.5 + i * 0.17)
+        pluck(30.84 + 0.06 * i, m(n), g=0.55, pan=-0.5 + i * 0.17)
     boing(31.2, 360, 520, 0.6, 0.3)
     slide(31.3, 1500, 420, 0.3, 0.6)
     bell(31.45, m('C7'), g=0.9); sparkle(31.45, 8, 0.5, 'G6', 0.7)

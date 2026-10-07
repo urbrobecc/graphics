@@ -42,26 +42,27 @@
 
   // ---- cards -------------------------------------------------------------
   const glyphs = {
-    tent(ctx, s) {
-      for (let k = 0; k < 6; k++) { ctx.fillStyle = k % 2 ? '#fff' : '#ff6f8d'; ctx.beginPath(); ctx.moveTo(0, -s * 0.42); ctx.lineTo(-s * 0.42 + k * s * 0.14, -s * 0.02); ctx.lineTo(-s * 0.42 + (k + 1) * s * 0.14, -s * 0.02); ctx.fill(); }
-      ctx.fillStyle = '#fff'; P.rrect(ctx, -s * 0.34, -s * 0.02, s * 0.68, s * 0.4, s * 0.06); ctx.fill();
-      ctx.fillStyle = '#ffc34d'; P.rrect(ctx, -s * 0.12, s * 0.12, s * 0.24, s * 0.26, s * 0.05); ctx.fill();
+    candles(ctx, s) {                       // three candles
+      const c = [['#2de58a', -0.26, 0.1, 0.34, 0.5], ['#ff5b7f', 0.0, -0.18, 0.4, 0.36], ['#2de58a', 0.26, -0.3, 0.2, 0.46]];
+      ctx.lineCap = 'round';
+      for (const [col, x, y, h, wick] of c) {
+        ctx.strokeStyle = col; ctx.lineWidth = s * 0.05; ctx.beginPath(); ctx.moveTo(x * s, (y - 0.14) * s); ctx.lineTo(x * s, (y + h + 0.1) * s); ctx.stroke();
+        ctx.fillStyle = col; P.rrect(ctx, x * s - s * 0.08, y * s, s * 0.16, h * s, s * 0.04); ctx.fill();
+      }
     },
-    mango(ctx, s) {
-      ctx.save(); ctx.rotate(-0.5);
-      const g = ctx.createLinearGradient(-s * 0.3, -s * 0.3, s * 0.3, s * 0.3); g.addColorStop(0, '#ffe36a'); g.addColorStop(0.6, '#ffae3d'); g.addColorStop(1, '#ff7a4a');
-      ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, 0, s * 0.3, s * 0.4, 0, 0, TAU); ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.beginPath(); ctx.ellipse(-s * 0.1, -s * 0.16, s * 0.07, s * 0.14, 0.3, 0, TAU); ctx.fill();
-      ctx.fillStyle = '#3fbf7f'; ctx.beginPath(); ctx.ellipse(s * 0.12, -s * 0.4, s * 0.2, s * 0.09, -0.6, 0, TAU); ctx.fill();
-      ctx.restore();
+    mic(ctx, s) {
+      ctx.fillStyle = '#fff'; P.rrect(ctx, -s * 0.12, -s * 0.38, s * 0.24, s * 0.4, s * 0.12); ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = s * 0.06; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(0, -s * 0.06, s * 0.22, 0.1, Math.PI - 0.1); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, s * 0.16); ctx.lineTo(0, s * 0.34); ctx.moveTo(-s * 0.12, s * 0.34); ctx.lineTo(s * 0.12, s * 0.34); ctx.stroke();
     },
-    note(ctx, s) {
-      ctx.fillStyle = '#fff'; ctx.strokeStyle = '#fff'; ctx.lineWidth = s * 0.08; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.ellipse(-s * 0.14, s * 0.26, s * 0.17, s * 0.12, -0.4, 0, TAU); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(s * 0.0, s * 0.22); ctx.lineTo(s * 0.0, -s * 0.34); ctx.quadraticCurveTo(s * 0.04, -s * 0.2, s * 0.28, -s * 0.16); ctx.stroke();
+    trend(ctx, s) {
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = s * 0.07; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.beginPath(); ctx.moveTo(-s * 0.34, s * 0.22); ctx.lineTo(-s * 0.1, -s * 0.02); ctx.lineTo(s * 0.06, s * 0.1); ctx.lineTo(s * 0.32, -s * 0.24); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(s * 0.12, -s * 0.26); ctx.lineTo(s * 0.34, -s * 0.26); ctx.lineTo(s * 0.34, -s * 0.04); ctx.stroke();
     },
   };
-  const tile = { tent: ['#ffd6e4', '#ff8fb5'], mango: ['#fff0b8', '#ffc65a'], note: ['#9ee9ff', '#4cc0f5'] };
+  const tile = { candles: ['#ffe9a8', '#ffb02e'], mic: ['#d9c9ff', '#8c6cf0'], trend: ['#9af0be', '#25b870'] };
 
   // o: x,y (top left), w,h, age (s since appearing), kind, title, sub, pill {text,color}, rot
   U.card = (ctx, o) => {
@@ -102,7 +103,7 @@
     if (s > 0) {
       ctx.save(); ctx.globalAlpha *= s; ctx.translate(o.w / 2 - 78, o.h / 2); ctx.strokeStyle = '#06361f'; ctx.lineWidth = 9; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       ctx.beginPath(); ctx.moveTo(-18, 2); ctx.lineTo(-5, 15); ctx.lineTo(19, -14); ctx.setLineDash([80, 80]); ctx.lineDashOffset = -80 * (1 - clamp(s * 1.4)); ctx.stroke(); ctx.restore();
-      P.text(ctx, 'saved', o.w / 2 + 28, o.h / 2 + 13, { font: P.font(700, 40), color: '#06361f', align: 'center', alpha: s });
+      P.text(ctx, o.doneLabel || 'saved', o.w / 2 + 28, o.h / 2 + 13, { font: P.font(700, 40), color: '#06361f', align: 'center', alpha: s });
     }
     ctx.restore();
   };
@@ -123,17 +124,18 @@
   // (x, y) is the tip of the tail
   U.bubble = (ctx, x, y, text, age, o = {}) => {
     if (age < 0) return;
-    const p = spring(age, 2.4, 0.4), font = o.font || P.font(700, o.size || 40);
-    const tw = P.measure(ctx, text, font), w = tw + 56, h = (o.size || 40) + 44;
+    const p = spring(age, 2.4, 0.4), size = o.size || 40, font = o.font || P.font(700, size);
+    const lines = text.split('\n'), lh = size * 1.2;
+    const tw = Math.max(...lines.map(l => P.measure(ctx, l, font))), w = tw + 56, h = lines.length * lh + 30 + (lines.length > 1 ? 4 : 14);
     ctx.save(); ctx.translate(x, y); ctx.scale(lerp(0.2, 1, p), lerp(0.2, 1, p)); ctx.globalAlpha *= clamp(age / 0.08) * (o.alpha === undefined ? 1 : o.alpha);
     ctx.rotate((o.rot || 0) * Math.PI / 180);
-    const bx = -w * (o.tail === undefined ? 0.28 : o.tail), by = -h - 26;
+    const bx = -w * (o.tail === undefined ? 0.28 : o.tail), by = -h - 26, rad = Math.min(h / 2, 46);
     ctx.shadowColor = 'rgba(30,110,160,0.25)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 12;
     ctx.fillStyle = o.fill || '#fff';
-    P.rrect(ctx, bx, by, w, h, h / 2); ctx.fill();
+    P.rrect(ctx, bx, by, w, h, rad); ctx.fill();
     ctx.beginPath(); ctx.moveTo(-16, by + h - 4); ctx.lineTo(0, 0); ctx.lineTo(18, by + h - 4); ctx.closePath(); ctx.fill();
     ctx.shadowColor = 'transparent';
-    P.text(ctx, text, bx + w / 2, by + h / 2 + (o.size || 40) * 0.34, { font, color: o.color || C.ink, align: 'center' });
+    lines.forEach((l, i) => P.text(ctx, l, bx + w / 2, by + 15 + lh * (i + 0.78) + (lines.length > 1 ? 0 : 7), { font, color: o.color || C.ink, align: 'center' }));
     ctx.restore();
   };
 
@@ -181,49 +183,58 @@
     ctx.fillStyle = lin(ctx, 0, -h / 2, 0, h / 2, [[0, '#e9fbff'], [1, '#ffffff']]); ctx.fillRect(-w, -h, 2 * w, 2 * h);
     const u = w / 400;                          // 400 design px wide
     ctx.translate(-w / 2, -h / 2); ctx.scale(u, u);
-    // island
     ctx.fillStyle = C.ink; P.rrect(ctx, 150, 22, 100, 30, 15); ctx.fill();
-    P.text(ctx, 'tonight', 28, 120, { font: P.font(700, 46), color: C.ink });
-    P.text(ctx, 'near you', 28, 156, { font: P.font(500, 24), color: C.inkSoft });
-    // hero card with the market scene inside
-    ctx.save(); P.rrect(ctx, 24, 190, 352, 330, 34); ctx.clip(); ctx.translate(200, 355);
-    P.scenes.market(ctx, t * 0.6, 260); ctx.restore();
-    ctx.fillStyle = 'rgba(110,215,255,0.22)'; P.rrect(ctx, 24, 190, 352, 330, 34); ctx.fill();
-    const fade = ctx.createLinearGradient(0, 400, 0, 520); fade.addColorStop(0, 'rgba(8,30,60,0)'); fade.addColorStop(1, 'rgba(8,30,60,0.78)');
-    ctx.save(); P.rrect(ctx, 24, 190, 352, 330, 34); ctx.clip(); ctx.fillStyle = fade; ctx.fillRect(24, 400, 352, 120); ctx.restore();
-    P.text(ctx, 'night market', 48, 480, { font: P.font(700, 36), color: '#fff' });
-    P.text(ctx, '7:00pm · pier 4', 48, 508, { font: P.font(500, 22), color: 'rgba(255,255,255,0.9)' });
-    // friends
+    P.text(ctx, 'today', 28, 122, { font: P.font(700, 50), color: C.ink });
+    P.text(ctx, '3 new signals', 28, 160, { font: P.font(500, 24), color: C.inkSoft });
+    const rows = [
+      ['candles', 'robinhood chain', 'just launched', 'new', '#ff7eb6'],
+      ['mic', 'MRVL', '6 podcast mentions', '+6', '#8c6cf0'],
+      ['trend', 'X', 'sentiment down today', 'down', '#ff6b8b'],
+    ];
+    rows.forEach(([kind, title, sub, pill, col], i) => {
+      const y = 196 + i * 132 + Math.sin(t * 1.6 + i) * 3;
+      ctx.save(); ctx.shadowColor = 'rgba(30,110,160,0.18)'; ctx.shadowBlur = 20; ctx.shadowOffsetY = 8;
+      P.rrect(ctx, 24, y, 352, 112, 30); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
+      const g = ctx.createLinearGradient(0, y + 14, 0, y + 98); g.addColorStop(0, tile[kind][0]); g.addColorStop(1, tile[kind][1]);
+      ctx.fillStyle = g; P.rrect(ctx, 38, y + 14, 84, 84, 24); ctx.fill();
+      ctx.save(); ctx.translate(80, y + 56); glyphs[kind](ctx, 84); ctx.restore();
+      P.text(ctx, title, 138, y + 62, { font: P.font(700, 26), color: C.ink });
+      P.text(ctx, sub, 138, y + 90, { font: P.font(500, 20), color: C.inkSoft });
+      const pw = P.measure(ctx, pill, P.font(700, 17)) + 22;
+      ctx.fillStyle = col; P.rrect(ctx, 364 - pw, y + 10, pw, 26, 13); ctx.fill();
+      P.text(ctx, pill, 364 - pw / 2, y + 29, { font: P.font(700, 17), color: '#fff', align: 'center' });
+    });
     const cols = ['#ff9ac7', '#7fd5ff', '#ffd777', '#b9a4ff', '#ffa88c'];
-    for (let i = 0; i < 5; i++) U.avatar(ctx, 54 + i * 33, 590, 21, cols[i]);
-    P.text(ctx, 'you + 5 going', 236, 598, { font: P.font(700, 22), color: C.ink });
-    // action
-    const pr = o.press || 0, g = ctx.createLinearGradient(0, 650, 0, 722); g.addColorStop(0, '#7cf0a5'); g.addColorStop(1, '#27c874');
-    ctx.save(); ctx.translate(200, 686); ctx.scale(1 - 0.05 * pr, 1 - 0.05 * pr); ctx.translate(-200, -686);
-    P.rrect(ctx, 24, 650, 352, 72, 36); ctx.fillStyle = g; ctx.fill();
-    P.text(ctx, "i'm in", 200, 698, { font: P.font(700, 34), color: '#06361f', align: 'center' }); ctx.restore();
+    for (let i = 0; i < 5; i++) U.avatar(ctx, 54 + i * 33, 622, 21, cols[i]);
+    P.text(ctx, '+5 scouting', 236, 630, { font: P.font(700, 21), color: C.ink });
+    const pr = o.press || 0, g = ctx.createLinearGradient(0, 668, 0, 740); g.addColorStop(0, '#7cf0a5'); g.addColorStop(1, '#27c874');
+    ctx.save(); ctx.translate(200, 704); ctx.scale(1 - 0.05 * pr, 1 - 0.05 * pr); ctx.translate(-200, -704);
+    P.rrect(ctx, 24, 668, 352, 72, 36); ctx.fillStyle = g; ctx.fill();
+    P.text(ctx, 'scout it', 200, 716, { font: P.font(700, 34), color: '#06361f', align: 'center' }); ctx.restore();
     ctx.restore();
     ctx.restore();
   };
   const lin = (ctx, x0, y0, x1, y1, stops) => { const g = ctx.createLinearGradient(x0, y0, x1, y1); stops.forEach(([o, c]) => g.addColorStop(o, c)); return g; };
 
   // ---- wordmark ---------------------------------------------------------------------
-  // draws "peri" with the i dotted by a mint ball. letters drop in one by one.
+  // draws the wordmark letter by letter. one letter slot (o.ball) is left empty for the mint ball,
+  // and its centre and radius are returned so the caller can drop the ball in.
   U.wordmark = (ctx, cx, baseY, size, age, o = {}) => {
-    const font = P.font(700, size), letters = ['p', 'e', 'r', 'ı'];
+    const text = o.text || 'scouter', ball = o.ball === undefined ? 2 : o.ball, st = o.stagger || 0.06;
+    const font = P.font(700, size), letters = text.split('');
     ctx.save(); ctx.font = font; ctx.letterSpacing = (-size * 0.02) + 'px';
     const ws = letters.map(l => ctx.measureText(l).width), total = ws.reduce((a, b) => a + b, 0);
-    let x = cx - total / 2, dot = null;
+    let x = cx - total / 2, slot = null;
     letters.forEach((l, i) => {
-      const k = clamp((age - (o.delay || 0) - i * 0.09) / 0.55), p = P.ease.outBack(k, 2.2);
+      if (i === ball) { slot = { x: x + ws[i] / 2, y: baseY - size * 0.262, r: size * 0.262 }; x += ws[i]; return; }
+      const k = clamp((age - (o.delay || 0) - i * st) / 0.55), p = P.ease.outBack(k, 2.2);
       ctx.save(); ctx.globalAlpha *= clamp(k * 4) * (o.alpha === undefined ? 1 : o.alpha);
       ctx.translate(x + ws[i] / 2, baseY); ctx.scale(lerp(1.25, 1, p), lerp(0.7, 1, p)); ctx.translate(0, (1 - p) * -size * 0.5);
       ctx.fillStyle = o.color || C.ink; ctx.textAlign = 'center'; ctx.fillText(l, 0, 0); ctx.restore();
-      if (i === 3) dot = { x: x + ws[i] / 2, y: baseY - size * 0.70 };
       x += ws[i];
     });
     ctx.restore();
-    return dot;
+    return slot;
   };
 
   // glossy mint ball (the dot)

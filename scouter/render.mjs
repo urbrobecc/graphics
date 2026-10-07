@@ -1,9 +1,9 @@
-// Offline renderer for the Peri film: drives index.html in headless Chromium,
+// Offline renderer for the Scouter film: drives index.html in headless Chromium,
 // captures every frame (with temporal supersampling for motion blur) and
 // encodes with ffmpeg.
 //
-//   node peri/render.mjs                       full render to peri/dist/peri.mp4
-//   node peri/render.mjs --stills 0,240,480    PNG stills to peri/dist/stills
+//   node scouter/render.mjs                       full render to scouter/dist/scouter.mp4
+//   node scouter/render.mjs --stills 0,240,480    PNG stills to scouter/dist/stills
 //   options: --subs 3 --workers 4 --ffmpeg /path/to/ffmpeg
 import { createRequire } from 'node:module';
 import { spawn, execFileSync } from 'node:child_process';
@@ -26,7 +26,7 @@ const args = Object.fromEntries(process.argv.slice(2).reduce((a, v, i, arr) => {
 const SUBS = +(args.subs || 3);
 const WORKERS = +(args.workers || Math.max(1, Math.min(4, os.cpus().length)));
 const FFMPEG = args.ffmpeg || process.env.FFMPEG || 'ffmpeg';
-const OUT = path.resolve(HERE, args.out || 'dist/peri.mp4');
+const OUT = path.resolve(HERE, args.out || 'dist/scouter.mp4');
 const FPS = 24;
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.woff': 'font/woff', '.wav': 'audio/wav' };
@@ -37,7 +37,7 @@ const server = http.createServer((req, res) => {
   fs.createReadStream(p).pipe(res);
 });
 await new Promise(r => server.listen(0, r));
-const PAGE = `http://127.0.0.1:${server.address().port}/peri/index.html?render`;
+const PAGE = `http://127.0.0.1:${server.address().port}/scouter/index.html?render`;
 
 const browser = await chromium.launch({ args: ['--disable-web-security', '--force-color-profile=srgb'] });
 async function openPage() {
@@ -63,7 +63,7 @@ if (args.stills) {
     console.log('still', f);
   }
 } else {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'peri-'));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'scouter-'));
   const per = Math.ceil(total / WORKERS);
   const t0 = Date.now();
   let done = 0;

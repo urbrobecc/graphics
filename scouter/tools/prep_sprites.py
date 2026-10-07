@@ -1,9 +1,9 @@
 """Cuts the character art into animatable sprites.
 
-  python3 peri/tools/prep_sprites.py
+  python3 scouter/tools/prep_sprites.py
 
-Reads  peri/assets/source.png  (character on a black background)
-Writes peri/assets/<variant>_{base,top,mid}.png and peri/assets/sprites.json
+Reads  scouter/assets/source.png  (character on a black background)
+Writes scouter/assets/<variant>_{base,top,mid}.png and scouter/assets/sprites.json
 
 Parts
   base  body + socket ring + lower pipe, with the painted face removed
